@@ -1,0 +1,12 @@
+plugins {
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    implementation project(':common')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'      // REST endpoint
+    implementation 'org.springframework.kafka:spring-kafka'               // KafkaTemplate + JsonSerializer
+    implementation 'com.fasterxml.jackson.core:jackson-databind'          // JSON for (de)serialization
+
+}
