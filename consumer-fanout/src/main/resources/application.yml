@@ -1,0 +1,23 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      properties:
+        reconnect.backoff.ms: 4000        # initial backoff
+        reconnect.backoff.max.ms: 5000   # cap backoff ~5s
+        retry.backoff.ms: 7000            # metadata/poll retry backoff
+    listener:
+      missing-topics-fatal: false
+  datasource:
+    url: jdbc:postgresql://localhost:5438/appdb
+    username: crm_user
+    password: crm_pass
+  jpa:
+    properties:
+      hibernate.default_schema: crm
+  flyway:
+    schemas: crm
+    default-schema: crm
+logging:
+  level:
+    org.apache.kafka.clients.NetworkClient: WARN   # or ERROR

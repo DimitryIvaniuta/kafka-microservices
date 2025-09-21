@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="60">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level [%t] %c - %msg%n"/>
+            <!-- Allow 1 event per 10 seconds (rate = events/second), burst = 1 -->
+            <BurstFilter level="INFO" rate="0.01" maxBurst="1"/>
+        </Console>
+        <!-- Async wrapper to avoid blocking on logs under load -->
+        <Async name="AsyncConsole">
+            <AppenderRef ref="Console"/>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <!-- Rate-limit JUST the Kafka network client chatter -->
+        <Logger name="org.apache.kafka.clients.NetworkClient" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Keep other Kafka logs useful -->
+        <Logger name="org.apache.kafka" level="INFO"/>
+
+        <Root level="INFO">
+            <AppenderRef ref="AsyncConsole"/>
+        </Root>
+    </Loggers>
+</Configuration>
