@@ -8,5 +8,5 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'      // REST endpoint
     implementation 'org.springframework.kafka:spring-kafka'               // KafkaTemplate + JsonSerializer
     implementation 'com.fasterxml.jackson.core:jackson-databind'          // JSON for (de)serialization
-
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // @Valid on DTOs
 }

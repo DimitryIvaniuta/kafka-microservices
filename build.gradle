@@ -5,6 +5,7 @@ plugins {
 }
 
 ext {
+    springBootVersion = '3.5.5'
     lombokVersion = '1.18.42'
 }
 
@@ -27,7 +28,7 @@ subprojects {
 
     // Align library versions across modules with Spring Boot BOM
     dependencyManagement {
-        imports { mavenBom "org.springframework.boot:spring-boot-dependencies:3.5.5" }
+        imports { mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}" }
     }
 
     configurations {
