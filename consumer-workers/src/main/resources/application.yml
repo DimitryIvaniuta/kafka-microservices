@@ -1,0 +1,14 @@
+spring:
+  kafka:
+    listener:
+      missing-topics-fatal: false
+  datasource:
+    url: jdbc:postgresql://localhost:5438/appdb
+    username: analytics_user
+    password: analytics_pass
+  jpa:
+    properties:
+      hibernate.default_schema: analytics
+  flyway:
+    schemas: analytics
+    default-schema: analytics
