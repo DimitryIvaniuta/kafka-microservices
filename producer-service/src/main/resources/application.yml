@@ -1,0 +1,65 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: producer-service
+
+  kafka:
+    # For local Docker setup with dual listeners, default to host port 29092.
+    # In containers, override with KAFKA_BOOTSTRAP_SERVERS=kafkams:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+
+    # --- Producer config (JSON, idempotent, transactional) ---
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+      # Delivery guarantees
+      acks: all
+      retries: 2147483647
+      # Idempotence ensures no duplicates on retry (will also cap in-flight requests appropriately)
+      properties:
+        enable.idempotence: true
+        # keep a short linger for better batching w/o much latency
+        linger.ms: 5
+        batch.size: 32768
+        compression.type: lz4
+        delivery.timeout.ms: 120000
+        request.timeout.ms: 30000
+
+      # Transactions: set a unique prefix per service/instance group
+      transaction-id-prefix: ${KAFKA_TX_PREFIX:lead-tx-}
+      # Optional transaction timeout (default 1 min)
+      # transaction-timeout: 60000
+
+    # Spring for Apache Kafka JSON settings:
+    properties:
+      # We do NOT add type headers; consumers set spring.json.value.default.type explicitly.
+      spring.json.add.type.headers: false
+
+    # Topic admin uses bootstrap-servers above; NewTopic beans in code create topics.
+    admin:
+      fail-fast: true
+
+  jackson:
+    # ISO-8601 output; JavaTimeModule auto-registered by Boot
+    serialization:
+      write-dates-as-timestamps: false
+
+# --- Logging ---
+logging:
+  level:
+    org.apache.kafka: WARN
+    org.springframework.kafka: INFO
+    com.github.dimitryivaniuta.gateway: INFO
+
+# --- Actuator (optional; uncomment if you add the dependency) ---
+# management:
+#   endpoints:
+#     web:
+#       exposure:
+#         include: "health,info,env,loggers,metrics"
+#   endpoint:
+#     health:
+#       show-details: "when_authorized"
