@@ -1,0 +1,87 @@
+version: "3.8"
+
+services:
+  # ---------- Kafka (single-broker KRaft) ----------
+
+  kafka:
+    image: confluentinc/cp-kafka:8.0.0
+    container_name: kafkams
+    ports:
+      - "9097:9092"    # optional: expose internal listener on host port 9097
+      - "29092:29092"  # host listener for host-based clients/tools
+    environment:
+      # ---- KRaft single node ----
+      CLUSTER_ID: "BkqGd2wCRsuvuPNkZSWJ0Q"            # REQUIRED by Confluent entrypoint
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafkams:9092,PLAINTEXT_HOST://localhost:29092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafkams:9093"
+
+      # ---- Storage / durability ----
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+
+      # ---- Dev defaults (we create topics explicitly in code) ----
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_NUM_PARTITIONS: "3"
+      KAFKA_DEFAULT_REPLICATION_FACTOR: "1"
+      KAFKA_MIN_INSYNC_REPLICAS: "1"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+
+      # ---- Retention ----
+      KAFKA_LOG_RETENTION_MS: "1209600000"       # 14 days
+      KAFKA_LOG_RETENTION_BYTES: "-1"
+      KAFKA_LOG_SEGMENT_BYTES: "1073741824"
+      KAFKA_COMPRESSION_TYPE: "lz4"
+
+    volumes:
+      - kafka_datams:/var/lib/kafka
+
+    # Let Confluent's entrypoint handle KRaft formatting (no custom entrypoint)
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server kafkams:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+  # ---------- PostgreSQL ----------
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: appdb
+    ports:
+      - "5438:5432"
+    volumes:
+      - pg_datams:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d appdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---------- Redis ----------
+  redis:
+    image: redis:latest
+    container_name: redisms
+    command: ["redis-server", "--save", "60", "100", "--loglevel", "warning"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_datams:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  kafka_datams:
+  pg_datams:
+  redis_datams:
