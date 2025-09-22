@@ -1,0 +1,77 @@
+{
+  "info": {
+    "_postman_id": "ee0ca3a9-1913-49b2-b93c-b5e324ec4db1",
+    "name": "Real Estate Leads - Kafka Producer",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection to publish lead events to Kafka via producer-service. Consumers (fanout/workers) will persist to Postgres."
+  },
+  "item": [
+    {
+      "name": "Create Lead (publish to Kafka)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Tenant-Id",
+            "value": "{{tenant_id}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/leads",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "leads"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"leadId\": \"\",\n  \"fullName\": \"Jane Doe\",\n  \"email\": \"jane.doe@example.com\",\n  \"phone\": \"+1-555-1234\",\n  \"city\": \"Warsaw\",\n  \"source\": \"web\",\n  \"budgetUsd\": 250000\n}"
+        },
+        "description": "Publishes a LeadEvent (CREATED) to topic `leads.events`. Returns 201 with eventId."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 201 Created', function() {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Body contains eventId (UUID)', function() {",
+              "  const body = pm.response.text();",
+              "  pm.expect(body).to.match(/[0-9a-fA-F\\-]{36}/);",
+              "});",
+              "",
+              "// Save eventId for convenience",
+              "const eventIdMatch = pm.response.text().match(/[0-9a-fA-F\\-]{36}/);",
+              "if (eventIdMatch) {",
+              "  pm.collectionVariables.set('last_event_id', eventIdMatch[0]);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "tenant_id",
+      "value": "demo-tenant"
+    }
+  ]
+}
