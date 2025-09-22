@@ -87,13 +87,4 @@ public class KafkaConsumerConfig {
         return factory;
     }
 
-
-    @Bean
-    NewTopic leadsTopic() {
-        return TopicBuilder.name(Topics.LEADS)
-                .partitions(3)
-                .replicas(1) // 3 in prod
-                .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(java.time.Duration.ofDays(7).toMillis()))
-                .build();
-    }
 }
