@@ -11,6 +11,7 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
@@ -19,7 +20,10 @@ import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.util.backoff.ExponentialBackOff;
-
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.common.config.TopicConfig;
+import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.config.TopicBuilder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,10 +34,15 @@ public class KafkaConsumerConfig {
     @Bean
     public ConsumerFactory<String, LeadEvent> consumerFactory(KafkaProperties properties) {
         Map<String, Object> props = new HashMap<>(properties.buildConsumerProperties());
+        // We configure the JsonDeserializer programmatically; make sure no spring.json.* props sneak in.
+        props.remove("spring.json.trusted.packages");
+        props.remove("spring.json.value.default.type");
+
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
 
         JsonDeserializer<LeadEvent> valueDeserializer = new JsonDeserializer<>(LeadEvent.class, false);
+        valueDeserializer.ignoreTypeHeaders();
         valueDeserializer.addTrustedPackages("com.github.dimitryivaniuta.gateway.common");
 
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), valueDeserializer);
@@ -76,5 +85,15 @@ public class KafkaConsumerConfig {
         // factory.setConcurrency(3);
 
         return factory;
+    }
+
+
+    @Bean
+    NewTopic leadsTopic() {
+        return TopicBuilder.name(Topics.LEADS)
+                .partitions(3)
+                .replicas(1) // 3 in prod
+                .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(java.time.Duration.ofDays(7).toMillis()))
+                .build();
     }
 }

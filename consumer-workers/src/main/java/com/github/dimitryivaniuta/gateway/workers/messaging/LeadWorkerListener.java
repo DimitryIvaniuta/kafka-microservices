@@ -32,7 +32,7 @@ public class LeadWorkerListener {
         if (event == null) {
             // Deserialization errors are classified as non-retryable by DefaultErrorHandler and go to DLT.
             // This guard is only defensive.
-            log.warn("Null LeadEvent at topic={} partition={} offset={}", rec.topic(), rec.partition(), rec.offset());
+//            log.warn("Null LeadEvent at topic={} partition={} offset={}", rec.topic(), rec.partition(), rec.offset());
             return;
         }
 

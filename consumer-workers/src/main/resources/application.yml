@@ -1,6 +1,12 @@
 spring:
   kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      isolation-level: read_committed
     listener:
+      ack-mode: MANUAL
       missing-topics-fatal: false
   datasource:
     url: jdbc:postgresql://localhost:5438/appdb
@@ -12,3 +18,6 @@ spring:
   flyway:
     schemas: analytics
     default-schema: analytics
+logging:
+  level:
+    org.apache.kafka.clients.NetworkClient: WARN
